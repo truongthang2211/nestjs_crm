@@ -17,8 +17,8 @@ export class GiaohangnhanhController {
   constructor(private readonly giaohangnhanhService: GiaohangnhanhService) {}
 
   @Get('shipmentCreate/:data')
-  async create(@Param('data') createobject: string) {
-    return await this.giaohangnhanhService.create(createobject);
+  async create(@Param('data') dealID: number) {
+    return await this.giaohangnhanhService.create(Number(dealID));
   }
 
   @Get()
