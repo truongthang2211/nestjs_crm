@@ -49,7 +49,7 @@ export class GiaohangnhanhService {
         client_order_code: String(dealID),
         weight: 12,
         to_ward_name: contact.ADDRESS_PROVINCE ?? 'Linh Trung',
-        cod_amount: 200000,
+        cod_amount: products.reduce((a, b) => a + b.PRICE, 0),
         to_district_name: contact.ADDRESS_REGION ?? 'Thủ Đức',
         to_province_name: contact.ADDRESS_CITY ?? 'TP Hồ Chí Minh',
         length: 1,
