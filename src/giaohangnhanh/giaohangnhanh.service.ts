@@ -1,9 +1,9 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { Contact } from './dto/Contact';
-import { CreateGiaohangnhanhDto } from './dto/create-giaohangnhanh.dto';
 import { Deal } from './dto/Deal';
+import { MyLocation } from './dto/Location';
 import { Product } from './dto/Product';
 import { UpdateGiaohangnhanhDto } from './dto/update-giaohangnhanh.dto';
 
@@ -24,7 +24,6 @@ export class GiaohangnhanhService {
       url: `https://b24-aypxm5.bitrix24.vn/rest/1/x6a2dlkxklx8n3np/crm.contact.get.json?id=${contactID}`,
     };
     let dataRs: any = await lastValueFrom(this.httpService.request(config));
-    console.log(dataRs.data);
     return dataRs.data.result;
   }
   async getProductList(DealID: number): Promise<Product[]> {
@@ -35,27 +34,38 @@ export class GiaohangnhanhService {
     let dataRs: any = await lastValueFrom(this.httpService.request(config));
     return dataRs.data.result;
   }
+  async getLocation(long: string, lat: string): Promise<MyLocation> {
+    var config = {
+      method: 'get',
+      url: `https://nominatim.openstreetmap.org/search?q=${long},${lat}&format=json&polygon=1&addressdetails=1`,
+    };
+    let dataRs: any = await lastValueFrom(this.httpService.request(config));
+    return dataRs.data[0];
+  }
   async create(dealID: number) {
     try {
       let products = await this.getProductList(dealID);
       let deal = await this.getDeal(dealID);
       let contact = await this.getInfOBuyer(Number(deal.CONTACT_ID));
-      var data = JSON.stringify({
+      let address: string[] =
+        deal.UF_CRM_1672927105711.split('|')[1].split(';');
+      let location = await this.getLocation(address[0], address[1]);
+      var data = {
         to_name: contact.NAME,
         payment_type_id: 2,
         to_phone: contact.PHONE[0]?.VALUE,
         required_note: 'CHOXEMHANGKHONGTHU',
-        to_address: contact.ADDRESS ?? 'Đường Hàn Thuyên',
+        to_address: `${location.address.tourism},${location.address.road}`,
         client_order_code: String(dealID),
         weight: 12,
-        to_ward_name: contact.ADDRESS_PROVINCE ?? 'Linh Trung',
+        to_ward_name: location.address.suburb.trim(),
         cod_amount: products.reduce((a, b) => a + b.PRICE, 0),
-        to_district_name: contact.ADDRESS_REGION ?? 'Thủ Đức',
-        to_province_name: contact.ADDRESS_CITY ?? 'TP Hồ Chí Minh',
+        to_district_name: location.address.city_district.trim(),
+        to_province_name: location.address.city,
         length: 1,
         width: 19,
         height: 10,
-        service_id: 53320,
+        service_id: 53321,
         items: products.map((p) => {
           return {
             name: p.PRODUCT_NAME,
@@ -67,9 +77,8 @@ export class GiaohangnhanhService {
             height: 12,
           };
         }),
-      });
+      };
       console.log(data);
-
       var config = {
         method: 'post',
         url: 'https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/create',
@@ -78,12 +87,12 @@ export class GiaohangnhanhService {
           ShopId: '121254',
           Token: 'aaceecdc-85f7-11ed-8183-12cf3da973bf',
         },
-        data: data,
+        data: JSON.stringify(data),
       };
       let dataRs: any = await lastValueFrom(this.httpService.request(config));
       return dataRs.data;
     } catch (error) {
-      return error;
+      return error.response.data;
     }
   }
 
