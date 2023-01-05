@@ -59,7 +59,7 @@ export class GiaohangnhanhService {
         client_order_code: String(dealID),
         weight: 12,
         to_ward_name: location.address.suburb.trim(),
-        cod_amount: products.reduce((a, b) => a + b.PRICE, 0),
+        cod_amount: products.reduce((a, b) => a + b.PRICE * b.QUANTITY, 0),
         to_district_name: location.address.city_district.trim(),
         to_province_name: location.address.city,
         length: 1,
