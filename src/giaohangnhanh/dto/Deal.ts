@@ -43,5 +43,5 @@ export interface Deal {
   UTM_CAMPAIGN?: any;
   UTM_CONTENT?: any;
   UTM_TERM?: any;
-  UF_CRM_1672927105711: string;
+  UF_CRM_1673278519241: string;
 }

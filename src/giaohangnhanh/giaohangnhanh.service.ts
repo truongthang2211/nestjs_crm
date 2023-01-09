@@ -1,5 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { Contact } from './dto/Contact';
 import { Deal } from './dto/Deal';
@@ -9,19 +10,25 @@ import { UpdateGiaohangnhanhDto } from './dto/update-giaohangnhanh.dto';
 
 @Injectable()
 export class GiaohangnhanhService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private configService: ConfigService,
+  ) {}
+  BITRIX_URL = this.configService.get<string>('BITRIX_URL');
+
   async getDeal(DealID: number): Promise<Deal> {
     var config = {
       method: 'get',
-      url: `https://b24-aypxm5.bitrix24.vn/rest/1/0tinjuv7qbs1si9g/crm.deal.get.json?id=${DealID}`,
+      url: `${this.BITRIX_URL}/crm.deal.get.json?id=${DealID}`,
     };
     let dataRs: any = await lastValueFrom(this.httpService.request(config));
+    console.log(dataRs.data.result);
     return dataRs.data.result;
   }
   async getInfOBuyer(contactID: number): Promise<Contact> {
     var config = {
       method: 'get',
-      url: `https://b24-aypxm5.bitrix24.vn/rest/1/x6a2dlkxklx8n3np/crm.contact.get.json?id=${contactID}`,
+      url: `${this.BITRIX_URL}/crm.contact.get.json?id=${contactID}`,
     };
     let dataRs: any = await lastValueFrom(this.httpService.request(config));
     return dataRs.data.result;
@@ -29,7 +36,7 @@ export class GiaohangnhanhService {
   async getProductList(DealID: number): Promise<Product[]> {
     var config = {
       method: 'get',
-      url: `https://b24-aypxm5.bitrix24.vn/rest/1/uehey2x4vjrxcz4g/crm.deal.productrows.get.json?id=${DealID}`,
+      url: `${this.BITRIX_URL}/crm.deal.productrows.get.json?id=${DealID}`,
     };
     let dataRs: any = await lastValueFrom(this.httpService.request(config));
     return dataRs.data.result;
@@ -48,7 +55,7 @@ export class GiaohangnhanhService {
       let deal = await this.getDeal(dealID);
       let contact = await this.getInfOBuyer(Number(deal.CONTACT_ID));
       let address: string[] =
-        deal.UF_CRM_1672927105711.split('|')[1].split(';');
+        deal.UF_CRM_1673278519241.split('|')[1].split(';');
       let location = await this.getLocation(address[0], address[1]);
       var data = {
         to_name: contact.NAME,
@@ -92,7 +99,8 @@ export class GiaohangnhanhService {
       let dataRs: any = await lastValueFrom(this.httpService.request(config));
       return dataRs.data;
     } catch (error) {
-      return error.response.data;
+      console.log(error);
+      return error.response?.data;
     }
   }
 
